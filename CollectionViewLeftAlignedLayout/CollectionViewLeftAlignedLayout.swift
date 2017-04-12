@@ -31,50 +31,50 @@ import UIKit
  Based on [stack overflow](http://stackoverflow.com/questions/13017257/how-do-you-determine-spacing-between-cells-in-uicollectionview-flowlayout)
  */
 public final class CollectionViewLeftAlignedLayout: UICollectionViewFlowLayout {
-    public override func layoutAttributesForElementsInRect(rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
-        return super.layoutAttributesForElementsInRect(rect)?
+    public override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
+        return super.layoutAttributesForElements(in: rect)?
             .map { $0.copy() as! UICollectionViewLayoutAttributes }
             .map { attributes in
                 guard attributes.representedElementKind == nil else { return attributes }
                 let indexPath = attributes.indexPath
-                if let frame = self.layoutAttributesForItemAtIndexPath(indexPath)?.frame {
+                if let frame = self.layoutAttributesForItem(at: indexPath)?.frame {
                     attributes.frame = frame
                 }
             return attributes
         }
     }
     
-    public override func layoutAttributesForItemAtIndexPath(indexPath: NSIndexPath) -> UICollectionViewLayoutAttributes? {
+    public override func layoutAttributesForItem(at indexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
         guard let collectionView = collectionView,
-            currentAttributes = super.layoutAttributesForItemAtIndexPath(indexPath)?.copy() as? UICollectionViewLayoutAttributes
+            let currentAttributes = super.layoutAttributesForItem(at: indexPath)?.copy() as? UICollectionViewLayoutAttributes
             else { return nil }
         let sectionInset = self.evaluatedSectionInsetForItemAtIndex(indexPath.section)
         guard indexPath.item > 0 else { return currentAttributes.leftAlignedWithSectionInset(sectionInset) }
-        let previousIndexPath = NSIndexPath(forItem: indexPath.item - 1, inSection: indexPath.section)
-        guard let previousFrame = layoutAttributesForItemAtIndexPath(previousIndexPath)?.frame else { return nil }
+        let previousIndexPath = IndexPath(item: indexPath.item - 1, section: indexPath.section)
+        guard let previousFrame = layoutAttributesForItem(at: previousIndexPath)?.frame else { return nil }
         let currentFrame = CGRect(
             x: sectionInset.left,
             y: currentAttributes.frame.origin.y,
             width: collectionView.frame.width - sectionInset.left + sectionInset.right,
             height: currentAttributes.frame.size.height)
-        guard CGRectIntersectsRect(previousFrame, currentFrame) else { return currentAttributes.leftAlignedWithSectionInset(sectionInset) }
+        guard previousFrame.intersects(currentFrame) else { return currentAttributes.leftAlignedWithSectionInset(sectionInset) }
         currentAttributes.frame.origin.x = previousFrame.origin.x + previousFrame.size.width + self.evaluatedMinimumInteritemSpacingForSectionAtIndex(indexPath.section)
         return currentAttributes
     }
     
-    private func evaluatedSectionInsetForItemAtIndex(index: Int) -> UIEdgeInsets {
+    fileprivate func evaluatedSectionInsetForItemAtIndex(_ index: Int) -> UIEdgeInsets {
         if let collectionView = collectionView,
-            delegate = collectionView.delegate as? UICollectionViewDelegateFlowLayout,
-            sectionInset = delegate.collectionView?(collectionView, layout: self, insetForSectionAtIndex: index) {
+            let delegate = collectionView.delegate as? UICollectionViewDelegateFlowLayout,
+            let sectionInset = delegate.collectionView?(collectionView, layout: self, insetForSectionAt: index) {
             return sectionInset
         }
         return self.sectionInset
     }
     
-    private func evaluatedMinimumInteritemSpacingForSectionAtIndex(index: Int) -> CGFloat {
+    fileprivate func evaluatedMinimumInteritemSpacingForSectionAtIndex(_ index: Int) -> CGFloat {
         if let collectionView = collectionView,
-            delegate = collectionView.delegate as? UICollectionViewDelegateFlowLayout,
-            minimumInteritemSpacing = delegate.collectionView?(collectionView, layout: self, minimumInteritemSpacingForSectionAtIndex: index) {
+            let delegate = collectionView.delegate as? UICollectionViewDelegateFlowLayout,
+            let minimumInteritemSpacing = delegate.collectionView?(collectionView, layout: self, minimumInteritemSpacingForSectionAt: index) {
             return minimumInteritemSpacing
         }
         return self.minimumInteritemSpacing
@@ -82,7 +82,7 @@ public final class CollectionViewLeftAlignedLayout: UICollectionViewFlowLayout {
 }
 
 extension UICollectionViewLayoutAttributes {
-    private func leftAlignedWithSectionInset(sectionInset: UIEdgeInsets) -> UICollectionViewLayoutAttributes {
+    fileprivate func leftAlignedWithSectionInset(_ sectionInset: UIEdgeInsets) -> UICollectionViewLayoutAttributes {
         let copy = self.copy() as! UICollectionViewLayoutAttributes
         copy.frame.origin.x = sectionInset.left
         return copy
